@@ -28,6 +28,7 @@ class JobManager:
                 try:
                     worker_class(job + '-' + str(i)).do_work()
                 except Exception as e:
+                    raise e
                     logger.critical('Worker {} encountered exception {}'.format(job, str(e)))
                     time.sleep(3)
                     target_function()
