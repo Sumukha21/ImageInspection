@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>Image Processing</title>
+</head>
+<body>
+  Select an image file, required feature extractor(s), add params and click submit
+  <br/>
+  <br/>
+  <input id="file" type="file"/>
+  <br/>
+  <div id="extractors">
+    <br/>
+    <select id="extractorSelect" onchange="createParamFields(this)">
+    </select>
+  </div>
+  <br/>
+  <button id="button">Submit</button>
+  <br/>
+  <br/>
+  <div id="result"></div>
+</body>
+<script>
+  document.getElementById('button').addEventListener('click', function() {
+    let files = document.getElementById('file').files;
+    if (files.length == 1) {
+      getBase64(files[0], afterConvertingToBase64);
+    } else {
+      alert('Please select exactly 1 file');
+    }
+  });
+
+  let extractorOptions = {
+    'Hog': ['Param1', 'Param2', 'Param3'],
+    'Edge': ['Param1', 'Param2', 'Param3'],
+    'Pixel': ['Param1', 'Param2', 'Param3']
+  }
+
+  let selected = [];
+
+  function repopulateSelect() {
+    let select = document.getElementById("extractorSelect");
+    while (select.hasChildNodes()) {
+      select.removeChild(select.lastChild);
+    }
+
+    let option = document.createElement("option");
+    option.value = "";
+    option.text = "";
+    select.appendChild(option)
+
+    Object.keys(extractorOptions).forEach((val) => {
+      if (selected.includes(val)) {
+        return;
+      }
+
+      let option = document.createElement("option");
+      option.value  = val;
+      option.text = val;
+      select.appendChild(option)
+    });
+  };
+
+  function createParamFields(obj){
+    let extractorOpt = extractorOptions[obj.value]
+
+    if (!extractorOpt) {
+      return alert('Something went wrong! Not able to find options for the extractor!');
+    }
+
+    let extractorDiv = document.createElement("div");
+    extractorDiv.id = obj.value;
+    extractorDiv.innerHTML = obj.value + "<br/>";
+
+    let extractors = document.getElementById("extractors")
+    extractors.insertBefore(extractorDiv, extractors.firstChild);
+    extractors.insertBefore(document.createElement("br"), extractors.firstChild);
+
+    let container = document.getElementById(obj.value);
+
+    extractorOpt.forEach((option) => {
+      let input = document.createElement("input");
+      input.type  = "text";
+      input.name = option;
+      input.placeholder = option;
+      container.appendChild(input);
+      container.appendChild(document.createElement("br"));
+    });
+
+    selected.push(obj.value);
+    repopulateSelect();
+  }
+
+  function uid() {
+    var S4 = function() {
+       return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
+    };
+    return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
+  }
+
+  function afterConvertingToBase64(content) {
+    let img_bin = content;
+    let featureExtractors = {};
+    selected.forEach((extractor) => {
+      featureExtractors[extractor] = {};
+      document.getElementById(extractor).childNodes.forEach((child) => {
+        if (child.nodeName == "INPUT") {
+          featureExtractors[extractor][child.name] = child.value;
+        }
+      });
+    });
+
+    var payload = {
+      "feature_extractor": featureExtractors,
+      "img_bin": content,
+      "request_id": uid().toString(),
+      "client_ts": Date.now().toString()
+    }
+
+    fetch("http://localhost:3000/dispatch",
+    {
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    })
+    .then(function(res){ 
+      return res.json()
+    })
+    .then(function(data){ 
+      console.log(JSON.stringify(data));
+      document.getElementById("result").innerHTML = data.message;
+    })
+    .catch((error) => {
+      console.error(error);
+      document.getElementById("result").innerHTML = "Failed to queue job!";
+    })
+  }
+
+  function getBase64(file, callback) {
+   const validImageTypes = ['image/gif', 'image/jpeg', 'image/png'];
+   if (!validImageTypes.includes(file['type'])) {
+     return alert('Invalid file type');
+   }
+   let reader = new FileReader();
+   reader.readAsDataURL(file);
+   reader.onload = function () {
+     callback(reader.result.split("base64,")[1]);
+   };
+   reader.onerror = function (error) {
+     console.log('Error: ', error);
+   };
+ }
+
+ repopulateSelect();
+</script>
+</html>
