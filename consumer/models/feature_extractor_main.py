@@ -2,7 +2,7 @@ import skimage
 import io
 from PIL import Image
 import numpy as np
-from feature_extractors import *
+from models.feature_extractors import *
 
 def staticMain(img_bin, feature_extractor_params={}):
     """
@@ -14,14 +14,24 @@ def staticMain(img_bin, feature_extractor_params={}):
                             Ex : {'Hog' : {**params}}
     """
     img = np.array(Image.open(io.BytesIO(img_bin)))
-    for feature in list(feature_extractor_params.keys()):
-        if feature.lower() == 'hog':
-            print("Extractng Histogram of Oriented Gradients features")
-            hog_features = hogFeats(img, feature_extractor_params[feature])
-            return hog_features
-        elif feature.lower() == 'canny':
-            print("Extracting Canny edge features")
-            canny_edges = cannyEdge(img, feature_extractor_params[feature])
-            return canny_edges
-
+    for feature in list(feature_extractor_params.keys()): 
+        parameters = feature_extractor_params[feature]
+        if parameters:
+            if feature.lower() == 'hog':
+                print("Extractng Histogram of Oriented Gradients features")
+                hog_features = hogFeats(img, feature_extractor_params[feature])
+                return hog_features
+            elif feature.lower() == 'canny':
+                print("Extracting Canny edge features")
+                canny_edges = cannyEdge(img, feature_extractor_params[feature])
+                return canny_edges
+        else: 
+            if feature.lower() == 'hog':
+                print("Extractng Histogram of Oriented Gradients features")
+                hog_features = hogFeats(img)
+                return hog_features
+            elif feature.lower() == 'canny':
+                print("Extracting Canny edge features")
+                canny_edges = cannyEdge(img)
+                return canny_edges
 
