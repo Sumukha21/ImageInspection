@@ -1,4 +1,6 @@
 import skimage
+import io
+from PIL import Image
 import numpy as np
 from feature_extractors import *
 
@@ -11,7 +13,7 @@ def staticMain(img_bin, feature_extractor_params={}):
                             Feature wise params
                             Ex : {'Hog' : {**params}}
     """
-    img = np.fromstring(img_bin, dtype=np.uint8)
+    img = np.array(Image.open(io.BytesIO(img_bin)))
     for feature in list(feature_extractor_params.keys()):
         if feature.lower() == 'hog':
             print("Extractng Histogram of Oriented Gradients features")

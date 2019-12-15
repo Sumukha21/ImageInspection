@@ -24,6 +24,7 @@
 </body>
 <script>
   document.getElementById('button').addEventListener('click', function() {
+    document.getElementById("result").innerHTML = '';
     let files = document.getElementById('file').files;
     if (files.length == 1) {
       getBase64(files[0], afterConvertingToBase64);
@@ -32,11 +33,7 @@
     }
   });
 
-  let extractorOptions = {
-    'Hog': ['Param1', 'Param2', 'Param3'],
-    'Edge': ['Param1', 'Param2', 'Param3'],
-    'Pixel': ['Param1', 'Param2', 'Param3']
-  }
+  let extractorOptions = ['Hog', 'Canny', 'Pixel']
 
   let selected = [];
 
@@ -51,7 +48,7 @@
     option.text = "";
     select.appendChild(option)
 
-    Object.keys(extractorOptions).forEach((val) => {
+    extractorOptions.forEach((val) => {
       if (selected.includes(val)) {
         return;
       }
@@ -63,10 +60,24 @@
     });
   };
 
-  function createParamFields(obj){
-    let extractorOpt = extractorOptions[obj.value]
+  function createNewField(event) {
+    let plus = event.srcElement;
 
-    if (!extractorOpt) {
+    let inputField = document.createElement("input");
+    inputField.type  = "text";
+    inputField.placeholder = "Param Name";
+
+    let inputValue = document.createElement("input");
+    inputValue.type  = "text";
+    inputValue.placeholder = "Param Value";
+
+    plus.parentNode.insertBefore(document.createElement("br"), plus.parentNode.lastChild);
+    plus.parentNode.insertBefore(inputField, plus.parentNode.lastChild);
+    plus.parentNode.insertBefore(inputValue, plus.parentNode.lastChild);
+  }
+
+  function createParamFields(obj){
+    if (!extractorOptions.includes(obj.value)) {
       return alert('Something went wrong! Not able to find options for the extractor!');
     }
 
@@ -77,17 +88,15 @@
     let extractors = document.getElementById("extractors")
     extractors.insertBefore(extractorDiv, extractors.firstChild);
     extractors.insertBefore(document.createElement("br"), extractors.firstChild);
-
+    
     let container = document.getElementById(obj.value);
 
-    extractorOpt.forEach((option) => {
-      let input = document.createElement("input");
-      input.type  = "text";
-      input.name = option;
-      input.placeholder = option;
-      container.appendChild(input);
-      container.appendChild(document.createElement("br"));
-    });
+    let plus = document.createElement("button");
+    plus.onclick = createNewField;
+    plus.innerHTML = "(+) Add Parameter";
+
+    container.appendChild(plus);
+    container.appendChild(document.createElement("br"));
 
     selected.push(obj.value);
     repopulateSelect();
@@ -105,9 +114,16 @@
     let featureExtractors = {};
     selected.forEach((extractor) => {
       featureExtractors[extractor] = {};
+      let name = '';
+      let isName = true;
       document.getElementById(extractor).childNodes.forEach((child) => {
         if (child.nodeName == "INPUT") {
-          featureExtractors[extractor][child.name] = child.value;
+          if (isName) {
+            name = child.value;
+            isName = false;
+            return;
+          }
+          featureExtractors[extractor][name] = child.value;
         }
       });
     });
